@@ -1,0 +1,39 @@
+TCLEPEG - README
+
+tclepeg is an effort to bring epeg's functionality to TCL by means of a 
+binary Linux library that can be loaded into a TCL program. 
+
+The tclepeg library provides a TCL command, epeg, that takes as an argument 
+JPEG image data and produces a JPEG thumbnail.
+
+The following example reads a JPEG file and produces a thumbnail JPEG file:
+
+
+	load ./tclepeg.so
+	# read in a JPEG image
+	set fd [open test.jpeg]
+	fconfigure $fd -translation binary
+	set img [read $fd]
+	close $fd
+
+	# write reduced image
+	set fd [open out.jpeg w]
+	fconfigure $fd -translation binary
+
+	# let tclepeg do the work
+	puts -nonewline $fd [epeg -width 320 -height 240 -quality 50 $img]
+
+	close $fd
+
+COMPILE
+
+Tclepeg depends on the existence of:
+
+	libepeg 
+	libjpeg
+
+To compile tclepeg use:
+
+	gcc -shared tclepeg.c -lepeg -ljpeg -o tclepeg.so
+
+provided libepeg and libjpeg are installed on your system.
