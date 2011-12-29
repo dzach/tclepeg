@@ -1,9 +1,15 @@
 TCLEPEG - README
 
 tclepeg is an effort to bring epeg's functionality to TCL by means of a 
-binary Linux library that can be loaded into a TCL program. epeg is a super-fast library for resizing JPEGs. It offers an improvement of at least an order of magnitude over other known image manipulation libraries. Epeg's source code can be found in the Enlightenment project: 
+binary Linux library that can be loaded into a TCL program. epeg is a 
+super-fast library for resizing JPEGs. It offers an improvement of 
+at least an order of magnitude over other known image manipulation libraries. 
+
+Epeg's source code can be found in the Enlightenment project: 
 
 	http://svn.enlightenment.org/svn/e/OLD/epeg/
+
+
 
 COMPILE
 
@@ -12,11 +18,15 @@ Tclepeg depends on the existence of:
 	libepeg 
 	libjpeg
 
-To compile tclepeg use:
+First complile the epeg source and create libepeg.so or libepeg.a
+
+Then, to compile tclepeg use:
 
 	gcc -shared tclepeg.c -lepeg -ljpeg -o tclepeg.so
 
-provided libepeg and libjpeg are installed on your system.
+provided libepeg and libjpeg are installed on your system or are in a directory known to the compiler. You might need to change the path for libepeg and libjpeg accordingly.
+
+
 
 USAGE:
 
@@ -45,6 +55,8 @@ The following example reads a JPEG file and produces a thumbnail JPEG file:
 	puts -nonewline $fd [epeg -width 320 -height 240 -quality 50 $img]
 
 	close $fd
+
+
 
 LICENSE
 
