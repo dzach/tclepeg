@@ -4,8 +4,8 @@
 * 	http://maemo.gitorious.org/maemo-af/epeg
 * 	http://svn.enlightenment.org/svn/e/OLD/epeg/
 * 
-* Adapted to tcl by dzach
-* 
+* Adapted to tcl by Dimitrios Zachariadis
+* BSD licensed
 */
 #include <tcl.h>
 #include <stdlib.h>
@@ -16,12 +16,21 @@ static int
 Tclepeg_Cmd(ClientData cdata, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
 	if(objc < 2) {
-		Tcl_SetObjResult(interp, Tcl_NewStringObj("wrong # args. Should be epeg ?option value ...? jpegdata", -1));
+		Tcl_SetObjResult(interp, Tcl_NewStringObj("wrong # args. Should be epeg ?-width width? ?-height height? ?-quality quality? ?-max maxdimension? jpegdata", -1));
 		return TCL_ERROR;
 	}
-	int i, w=320, h=240, q=50, sizei, sizeo;
+	int i, W, H, w=0, h=0, q=50, m=64, sizei, sizeo;
 	unsigned char *imi, *imo, *imo1, *opt, *val;
 	Epeg_Image *im;
+	
+	// get input image
+	imi = Tcl_GetByteArrayFromObj(objv[objc-1], &sizei);
+	// input image in memory
+	if ( (im = epeg_memory_open(imi,sizei)) == NULL)
+	{
+		Tcl_SetObjResult(interp, Tcl_NewStringObj("epeg: could not open image in memory", -1));
+		return TCL_ERROR;
+	}
 	
 	// set user options
 	for (i=1; i<objc-2; i++)
@@ -39,18 +48,30 @@ Tclepeg_Cmd(ClientData cdata, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[
 		{
 			q = atof(Tcl_GetString(objv[++i]));
 		}
+		else if (strncmp(opt, "-m", 2) == 0)
+		{
+			m = atof(Tcl_GetString(objv[++i]));
+		}
 		else
 		{
-			printf("option %s is irrelevant\n",Tcl_GetString(objv[i]));
+			fprintf(stderr,"option %s is unknown\n",Tcl_GetString(objv[i]));
 		}
 	}
-	imi = Tcl_GetByteArrayFromObj(objv[objc-1], &sizei);
-	
-	// input image in memory
-	if ( (im = epeg_memory_open(imi,sizei)) == NULL)
+	/* resize image to max dimension whlile keeping the aspect ratio
+	 * but only if neither width nor height have been set by user
+	 * If -m is not set, then use the default
+	*/
+	if (w == 0 || h == 0)
 	{
-		Tcl_SetObjResult(interp, Tcl_NewStringObj("epeg: could not open image in memory", -1));
-		return TCL_ERROR;
+		// get input image dimensions
+		epeg_size_get(im, &W, &H);
+		if (W > H) {
+			w = m;
+			h = m * H / W;
+		} else {
+			h = m;
+			w = m * W / H;
+		}
 	}
 	epeg_decode_size_set           (im, w, h);
 	epeg_quality_set               (im, q);
@@ -86,7 +107,7 @@ Tclepeg_Init(Tcl_Interp *interp)
 		return TCL_ERROR;
 	}
 	/* changed this to check for an error - GPS */
-	if (Tcl_PkgProvide(interp, "tclepeg", "0.3") == TCL_ERROR) {
+	if (Tcl_PkgProvide(interp, "tclepeg", "0.4") == TCL_ERROR) {
 		return TCL_ERROR;
 	}
 	Tcl_CreateObjCommand(interp, "epeg", Tclepeg_Cmd, NULL, NULL);
